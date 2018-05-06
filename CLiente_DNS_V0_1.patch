@@ -1,0 +1,1106 @@
+Index: README.md
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- README.md	(date 1524577074000)
++++ README.md	(date 1524577074000)
+@@ -0,0 +1,1 @@
++# CentralitaAsterisk
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/NSResourceRecord.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/NSResourceRecord.java	(date 1525469416000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/NSResourceRecord.java	(date 1525469416000)
+@@ -0,0 +1,62 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++import static es.uvigo.det.ro.simpledns.RRType.NS;
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class NSResourceRecord extends ResourceRecord {
++    private final DomainName ns;
++
++    public NSResourceRecord(DomainName domain, int ttl, DomainName ns) {
++        super(domain, NS, ttl, ns.toByteArray());
++
++        this.ns = ns;
++    }
++
++    protected NSResourceRecord(ResourceRecord decoded, final byte[] message) {
++        super(decoded);
++
++        ns = new DomainName(getRRData(), message);
++    }
++
++    public final DomainName getNS() {
++        return ns;
++    }
++
++    @Override
++    public byte[] toByteArray() {
++        ByteArrayOutputStream os = new ByteArrayOutputStream();
++
++        try {
++            os.write(super.toByteArray());
++            os.write(ns.toByteArray());
++        } catch (IOException ex) {
++            Logger.getLogger(NSResourceRecord.class.getName()).log(Level.SEVERE, null, ex);
++            System.exit(-1);
++        }
++
++        return os.toByteArray();
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Utils.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Utils.java	(date 1525469506000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Utils.java	(date 1525469506000)
+@@ -0,0 +1,58 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ */
++class Utils {
++
++    public static byte[] int16toByteArray(int i) {
++        byte[] output = new byte[2];
++
++        output[0] = (byte) ((i & 0xFF00) >> 8);
++        output[1] = (byte) (i & 0x00FF);
++
++        return output;
++    }
++
++    public static byte[] int32toByteArray(int i) {
++        byte[] output = new byte[4];
++
++        output[0] = (byte) ((i & 0xFF000000) >> 24);
++        output[1] = (byte) ((i & 0x00FF0000) >> 16);
++        output[2] = (byte) ((i & 0x0000FF00) >> 8);
++        output[3] = (byte) (i & 0x000000FF);
++
++        return output;
++    }
++
++    public static int int16fromByteArray(byte[] val) {
++        return (val[0] << 8) + (val[1] & 0xff);
++    }
++
++    public static int int32fromByteArray(byte[] val) {
++        int value = 0;
++
++        for (int i = 0; i < 4; i++) {
++            value = (value << 8) + (val[i] & 0xff);
++        }
++
++        return value;
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/DomainName.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/DomainName.java	(date 1525469370000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/DomainName.java	(date 1525469370000)
+@@ -0,0 +1,109 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.nio.charset.Charset;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class DomainName {
++
++    private final static Charset ASCII = Charset.forName("US-ASCII");
++    private final List<String> labels = new ArrayList<>();
++    private int encoded_length = -1;
++
++    public DomainName(String domain) {
++        labels.addAll(Arrays.asList(domain.split("\\.")));
++    }
++
++    public DomainName(byte[] domain, byte[] message) {
++        fromByteArray(domain, message);
++    }
++
++    @Override
++    public String toString() {
++        String res = "";
++
++        return labels.stream().map((label) -> label + '.').reduce(res, String::concat);
++    }
++
++    private void fromByteArray(final byte[] domain, final byte[] message) {
++        int i = 0;
++        while (i < domain.length) {
++            int size = (domain[i++] & 0xff);
++            if (size == 0) {
++                break;
++            }
++
++            if ((size & 0xc0) == 0xc0) { // Pointer
++                int offset = (domain[i++] & 0xff) + ((size & 0x3f) << 8);
++                setEncodedLength(i);
++
++                fromByteArray(Arrays.copyOfRange(message, offset, message.length), message);
++
++                return;
++            }
++
++            String label = new String(Arrays.copyOfRange(domain, i, i + size), ASCII);
++            i += size;
++            labels.add(label);
++        }
++
++        setEncodedLength(i);
++    }
++
++    public byte[] toByteArray() {
++        ByteArrayOutputStream bo = new ByteArrayOutputStream(labels.size() * 5); // A good approximation to final size
++        labels.forEach((label) -> {
++            try {
++                bo.write(label.length());
++                bo.write(label.getBytes(ASCII));
++            } catch (IOException ex) {
++                Logger.getLogger(DomainName.class.getName()).log(Level.SEVERE, null, ex);
++                System.exit(-1);
++            }
++        });
++        bo.write(0); // Final label
++
++        return bo.toByteArray();
++    }
++
++    public int getEncodedLength() {
++        if (encoded_length < 0) {
++            encoded_length = labels.size(); // 1 byte for each label for its size
++            labels.forEach((label) -> {
++                encoded_length += label.length();
++            });
++        }
++        return encoded_length;
++    }
++
++    private void setEncodedLength(int i) {
++        if (encoded_length < 0) { // Not recorded yet
++            encoded_length = i;
++        }
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AResourceRecord.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AResourceRecord.java	(date 1525469349000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AResourceRecord.java	(date 1525469349000)
+@@ -0,0 +1,73 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++import static es.uvigo.det.ro.simpledns.RRType.A;
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.net.Inet4Address;
++import java.net.InetAddress;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class AResourceRecord extends ResourceRecord {
++    private final Inet4Address addr;
++
++    public AResourceRecord(DomainName domain, int ttl, Inet4Address addr) {
++        super(domain, A, ttl, addr.getAddress());
++
++        this.addr = addr;
++    }
++
++    protected AResourceRecord(ResourceRecord decoded) throws Exception {
++        super(decoded);
++
++        if (getRDLength() != 4) {
++            throw new Exception("Incorrect rdlength for A Resource Records");
++        }
++
++        InetAddress ad = InetAddress.getByAddress(getRRData());
++        if (!(ad instanceof Inet4Address)) {
++            throw new Exception("Address is not a valid IPv4 Address");
++        }
++
++        addr = (Inet4Address) ad;
++    }
++
++    public final Inet4Address getAddress() {
++        return addr;
++    }
++
++    @Override
++    public byte[] toByteArray() {
++        ByteArrayOutputStream os = new ByteArrayOutputStream();
++
++        try {
++            os.write(super.toByteArray());
++            os.write(addr.getAddress());
++        } catch (IOException ex) {
++            Logger.getLogger(AResourceRecord.class.getName()).log(Level.SEVERE, null, ex);
++            System.exit(-1);
++        }
++
++        return os.toByteArray();
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Message.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Message.java	(date 1525469527000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/Message.java	(date 1525469527000)
+@@ -0,0 +1,344 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.security.SecureRandom;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.List;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class Message {
++
++    private static final SecureRandom RANDOM = new SecureRandom();
++    private final int messageId;
++    private DomainName question;
++    private RRType questionType;
++    private RRClass questionClass;
++    private final List<ResourceRecord> answers;
++    private final List<ResourceRecord> nameServers;
++    private final List<ResourceRecord> additionalRecords;
++    private final MessageOptions options;
++
++    /**
++     * Constructs a message of the given type
++     *
++     * @param question The Domain to ask for
++     * @param type The type of the query of type
++     * @param recursion Wether recursion is desired
++     */
++    public Message(String question, RRType type, boolean recursion) {
++        this(new DomainName(question), type, recursion);
++    }
++
++    /**
++     * Constructs a message of the given type
++     *
++     * @param question The Domain to ask for
++     * @param type The type of the query of type
++     * @param recursion Wether recursion is desired
++     */
++    public Message(DomainName question, RRType type, boolean recursion) {
++        this(question, type, new ArrayList<ResourceRecord>(0), new ArrayList<ResourceRecord>(0), new ArrayList<ResourceRecord>(0), recursion);
++    }
++
++    protected Message(DomainName question, RRType type, List<ResourceRecord> answers, List<ResourceRecord> nameServers, List<ResourceRecord> addionalRecords, boolean recursion) {
++        this.question = question;
++        this.answers = answers;
++        this.nameServers = nameServers;
++        this.additionalRecords = addionalRecords;
++        this.options = new MessageOptions();
++        this.questionType = type;
++        this.questionClass = RRClass.IN;
++        options.setOPCODE(0);
++        options.setQR(0);
++        options.setRD(recursion ? 1 : 0);
++        byte[] id_bytes = new byte[2];
++        RANDOM.nextBytes(id_bytes);
++        messageId = Utils.int16fromByteArray(id_bytes);
++    }
++
++    /**
++     * Constructs a message from a byte array
++     *
++     * @param messageBytes the bytes forming the complete message
++     * @throws Exception in case the Message cannot be parsed
++     */
++    public Message(final byte[] messageBytes) throws Exception {
++        byte[] buffer = messageBytes;
++        final int length = messageBytes.length;
++
++        messageId = Utils.int16fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++
++        options = new MessageOptions(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++
++        if (options.getTC()) {
++            throw new Exception("We do not know what to do with truncated responses");
++        }
++
++        int qcount, acount, nscount, adcount;
++        qcount = Utils.int16fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++        acount = Utils.int16fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++        nscount = Utils.int16fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++        adcount = Utils.int16fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++
++        if (qcount != 1) {
++            throw new Exception("We do not yet support unquestioned queries");
++        }
++
++        question = new DomainName(buffer, messageBytes);
++        buffer = Arrays.copyOfRange(buffer, question.getEncodedLength(), length);
++        questionType = RRType.fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++        questionClass = RRClass.fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, length);
++
++        answers = new ArrayList<>(acount);
++        for (int i = 0; i < acount; i++) {
++            ResourceRecord record = ResourceRecord.createResourceRecord(buffer, messageBytes);
++            buffer = Arrays.copyOfRange(buffer, record.getEncodedLength(), length);
++            answers.add(record);
++        }
++        nameServers = new ArrayList<>(nscount);
++        for (int i = 0; i < nscount; i++) {
++            ResourceRecord record = ResourceRecord.createResourceRecord(buffer, messageBytes);
++            buffer = Arrays.copyOfRange(buffer, record.getEncodedLength(), length);
++            nameServers.add(record);
++        }
++        additionalRecords = new ArrayList<>(adcount);
++        for (int i = 0; i < adcount; i++) {
++            ResourceRecord record = ResourceRecord.createResourceRecord(buffer, messageBytes);
++            buffer = Arrays.copyOfRange(buffer, record.getEncodedLength(), length);
++            additionalRecords.add(record);
++        }
++    }
++
++    public byte[] toByteArray() throws IOException {
++        ByteArrayOutputStream os = new ByteArrayOutputStream();
++
++        os.write(Utils.int16toByteArray(messageId));
++        os.write(options.toByteArray());
++
++        os.write(Utils.int16toByteArray(1)); // qdcount;
++        os.write(Utils.int16toByteArray(answers.size()));
++        os.write(Utils.int16toByteArray(nameServers.size()));
++        os.write(Utils.int16toByteArray(additionalRecords.size()));
++
++        os.write(question.toByteArray());
++        os.write(questionType.toByteArray());
++        os.write(questionClass.toByteArray());
++
++        for (ResourceRecord record : answers) {
++            os.write(record.toByteArray());
++        }
++        for (ResourceRecord record : nameServers) {
++            os.write(record.toByteArray());
++        }
++        for (ResourceRecord record : additionalRecords) {
++            os.write(record.toByteArray());
++        }
++
++        return os.toByteArray();
++    }
++
++    /**
++     * @return the messageId
++     */
++    public int getMessageId() {
++        return messageId;
++    }
++
++    /**
++     * @return the question
++     */
++    public DomainName getQuestion() {
++        return question;
++    }
++
++    /**
++     * @return the questionType
++     */
++    public RRType getQuestionType() {
++        return questionType;
++    }
++
++    /**
++     * @return the questionClass
++     */
++    public RRClass getQuestionClass() {
++        return questionClass;
++    }
++
++    /**
++     * @return the answers
++     */
++    public List<ResourceRecord> getAnswers() {
++        return answers;
++    }
++
++    /**
++     * @return the nameServers
++     */
++    public List<ResourceRecord> getNameServers() {
++        return nameServers;
++    }
++
++    /**
++     * @return the ad_records
++     */
++    public List<ResourceRecord> getAdditonalRecords() {
++        return additionalRecords;
++    }
++
++    static private class MessageOptions {
++
++        public MessageOptions() {
++            QR = OPCODE = AA = TC = RD = RA = Z = RCODE = 0;
++        }
++
++        public MessageOptions(final byte[] options_bytes) {
++            final int options = Utils.int16fromByteArray(options_bytes);
++
++            RCODE = options & 0x000F;
++            Z = (options & 0x0070) >> 4;
++            RA = (options & 0x0080) >> 7;
++            RD = (options & 0x0100) >> 8;
++            TC = (options & 0x0200) >> 9;
++            AA = (options & 0x0400) >> 10;
++            OPCODE = (options & 0x7800) >> 11;
++            QR = (options & 0x8000) >> 15;
++        }
++
++        byte[] toByteArray() {
++            final int options = RCODE | Z << 4 | RA << 7 | RD << 8 | TC << 9
++                    | AA << 10 | OPCODE << 11 | QR << 15;
++
++            return Utils.int16toByteArray(options);
++        }
++
++        private int QR;
++        private int OPCODE;
++        private final int AA;
++        private final int TC;
++        private int RD;
++        private final int RA;
++        private final int Z;
++        private final int RCODE;
++
++        /**
++         * @return the QR
++         */
++        public boolean getQR() {
++            return QR > 0;
++        }
++
++        /**
++         * @param QR the QR to set
++         */
++        public void setQR(int QR) {
++            this.QR = QR;
++        }
++
++        /**
++         * @param QR the QR to set
++         */
++        public void setQR(boolean QR) {
++            this.QR = QR ? 1 : 0;
++        }
++
++        /**
++         * @return the OPCODE
++         */
++        public int getOPCODE() {
++            return OPCODE;
++        }
++
++        /**
++         * @param OPCODE the OPCODE to set
++         */
++        public void setOPCODE(int OPCODE) {
++            this.OPCODE = OPCODE;
++        }
++
++        /**
++         * @return the AA
++         */
++        public boolean getAA() {
++            return AA > 0;
++        }
++
++        /**
++         * @return the TC
++         */
++        public boolean getTC() {
++            return TC != 0;
++        }
++
++        /**
++         * @return the RD
++         */
++        public boolean getRD() {
++            return RD != 0;
++        }
++
++        /**
++         * @param RD the RD to set
++         */
++        public void setRD(int RD) {
++            this.RD = RD;
++        }
++
++        /**
++         * @param RD the RD to set
++         */
++        public void setRD(boolean RD) {
++            this.RD = RD ? 1 : 0;
++        }
++
++        /**
++         * @return the RA
++         */
++        public boolean getRA() {
++            return RA > 0;
++        }
++
++        /**
++         * @return the Z
++         */
++        public int getZ() {
++            return Z;
++        }
++
++        /**
++         * @return the RCODE
++         */
++        public int getRCODE() {
++            return RCODE;
++        }
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRClass.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRClass.java	(date 1525469458000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRClass.java	(date 1525469458000)
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public enum RRClass {
++    IN(1), // the Internet
++    CH(3), // the CHAOS class
++    HS(4); // Hesiod
++
++    static RRClass fromByteArray(final byte[] bytes) throws Exception {
++        final int val = Utils.int16fromByteArray(bytes);
++
++        for (RRClass id : values()) {
++            if (val == id.id) {
++                return id;
++            }
++        }
++
++        throw (new Exception("Unsupported RRClass: " + val));
++    }
++
++
++    private final int id;
++    // Hesiod
++
++    private RRClass(int id) {
++        this.id = id;
++    }
++    public byte[] toByteArray() {
++        return Utils.int16toByteArray(id);
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRType.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRType.java	(date 1525469488000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/RRType.java	(date 1525469488000)
+@@ -0,0 +1,52 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++public enum RRType {
++    A(1), // a host address
++    NS(2), // an authoritative name server
++    CNAME(5), // the canonical name for an alias
++    SOA(6), // marks the start of a zone of authority
++    PTR(12), // a domain name pointer
++    HINFO(13), // host information
++    MX(15), // mail exchange
++    TXT(16), // text strings
++    AAAA(28); // an IPv6 host address*/
++
++    static RRType fromByteArray(final byte[] bytes) throws Exception {
++        final int val = Utils.int16fromByteArray(bytes);
++
++        for (RRType id : values()) {
++            if (val == id.id) {
++                return id;
++            }
++        }
++
++        throw (new Exception("Unsupported RRType: " + val));
++    }
++
++
++    private final int id;
++    // an IPv6 host address*/
++
++    private RRType(int id) {
++        this.id = id;
++    }
++    public byte[] toByteArray() {
++        return Utils.int16toByteArray(id);
++    }
++}
+Index: IdeaProjects/ClienteDNS/.idea/vcs.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/.idea/vcs.xml	(date 1525469055000)
++++ IdeaProjects/ClienteDNS/.idea/vcs.xml	(date 1525469055000)
+@@ -0,0 +1,6 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project version="4">
++  <component name="VcsDirectoryMappings">
++    <mapping directory="$USER_HOME$" vcs="Git" />
++  </component>
++</project>
+\ No newline at end of file
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AAAAResourceRecord.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AAAAResourceRecord.java	(date 1525469337000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/AAAAResourceRecord.java	(date 1525469337000)
+@@ -0,0 +1,76 @@
++
++        /*
++         * Copyright (C) 2016–2018 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++         *
++         * This program is free software: you can redistribute it and/or modify
++         * it under the terms of the GNU General Public License as published by
++         * the Free Software Foundation, either version 3 of the License, or
++         * (at your option) any later version.
++         *
++         * This program is distributed in the hope that it will be useful,
++         * but WITHOUT ANY WARRANTY; without even the implied warranty of
++         * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++         * GNU General Public License for more details.
++         *
++         * You should have received a copy of the GNU General Public License
++         * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++         */
++        package es.uvigo.det.ro.simpledns;
++
++        import static es.uvigo.det.ro.simpledns.RRType.AAAA;
++        import java.io.ByteArrayOutputStream;
++        import java.io.IOException;
++        import java.net.Inet6Address;
++        import java.net.InetAddress;
++        import java.util.logging.Level;
++        import java.util.logging.Logger;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class AAAAResourceRecord extends ResourceRecord {
++    private final Inet6Address addr;
++
++    public AAAAResourceRecord(DomainName domain, int ttl, Inet6Address addr) {
++        super(domain, AAAA, ttl, addr.getAddress());
++
++        this.addr = addr;
++    }
++
++    protected AAAAResourceRecord(ResourceRecord decoded) throws Exception {
++        super(decoded);
++
++        int index = commonSize();
++
++        if (getRDLength() != 16) {
++            throw new Exception("Incorrect rdlength for AAAA Resource Records");
++        }
++
++        InetAddress ad = InetAddress.getByAddress(getRRData());
++        if (!(ad instanceof Inet6Address)) {
++            throw new Exception("Address is not a valid IPv6 Address");
++        }
++
++        addr = (Inet6Address) ad;
++    }
++
++    public final Inet6Address getAddress() {
++        return addr;
++    }
++
++    @Override
++    public byte[] toByteArray() {
++        ByteArrayOutputStream os = new ByteArrayOutputStream();
++
++        try {
++            os.write(super.toByteArray());
++            os.write(addr.getAddress());
++        } catch (IOException ex) {
++            Logger.getLogger(AAAAResourceRecord.class.getName()).log(Level.SEVERE, null, ex);
++            System.exit(-1);
++        }
++
++        return os.toByteArray();
++    }
++}
+Index: IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/ResourceRecord.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/ResourceRecord.java	(date 1525469438000)
++++ IdeaProjects/ClienteDNS/src/es/uvigo/det/ro/simpledns/ResourceRecord.java	(date 1525469438000)
+@@ -0,0 +1,186 @@
++/*
++ * Copyright (C) 2016 Miguel Rodriguez Perez <miguel@det.uvigo.gal>
++ *
++ * This program is free software: you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation, either version 3 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
++ */
++package es.uvigo.det.ro.simpledns;
++
++import java.io.ByteArrayOutputStream;
++import java.io.IOException;
++import java.util.Arrays;
++import java.util.logging.Level;
++import java.util.logging.Logger;
++
++/**
++ *
++ * @author Miguel Rodriguez Perez
++ */
++public class ResourceRecord {
++
++    /**
++     * Creates a new ResourceRecord based on a byte array
++     *
++     * @param rrecord A byte array with the serialized RR
++     * @param message A byte array containing the complete message
++     * @return A ResourceRecord of the appropriate type
++     * @throws Exception in case the bytes cannot be fully parsed
++     */
++    static public ResourceRecord createResourceRecord(final byte[] rrecord, final byte[] message) throws Exception {
++        ResourceRecord temp = new ResourceRecord(rrecord, message);
++
++        switch (temp.getRRType()) {
++            case A:
++                return new AResourceRecord(temp);
++            case AAAA:
++                return new AAAAResourceRecord(temp);
++            case NS:
++                return new NSResourceRecord(temp, message);
++            default:
++                return temp;
++        }
++    }
++
++    private final DomainName domain;
++    private final RRType rrtype;
++    private final RRClass rrclass;
++    private final int ttl;
++    private final int rdlength;
++    private final byte[] rrdata;
++
++    protected ResourceRecord(DomainName domain, RRType type, int ttl, final byte[] rrdata) {
++        this.domain = domain;
++        this.rrtype = type;
++        this.rrclass = RRClass.IN;
++        this.ttl = ttl;
++        this.rdlength = rrdata.length;
++        this.rrdata = rrdata;
++    }
++
++    protected ResourceRecord(final byte[] record, final byte[] message) throws Exception {
++        byte[] buffer = record;
++
++        domain = new DomainName(record, message);
++        buffer = Arrays.copyOfRange(buffer, domain.getEncodedLength(), record.length);
++
++        rrtype = RRType.fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, record.length);
++
++        rrclass = RRClass.fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 2, record.length);
++
++        ttl = Utils.int32fromByteArray(buffer);
++        buffer = Arrays.copyOfRange(buffer, 4, record.length);
++
++        rdlength = Utils.int16fromByteArray(buffer);
++
++        rrdata = Arrays.copyOfRange(buffer, 2, 2 + rdlength);
++    }
++
++    protected ResourceRecord(ResourceRecord copy) {
++        this.domain = copy.domain;
++        this.rrtype = copy.rrtype;
++        this.rrclass = copy.rrclass;
++        this.ttl = copy.ttl;
++        this.rdlength = copy.rdlength;
++        this.rrdata = copy.rrdata;
++    }
++
++    /**
++     * Required size to serialize the Resource Record
++     *
++     * @return the number of bytes needed
++     */
++    public int getEncodedLength() {
++        return commonSize() + getRDLength();
++    }
++
++    protected byte[] toByteArray() {
++        ByteArrayOutputStream os = new ByteArrayOutputStream(commonSize());
++
++        try {
++            os.write(domain.toByteArray());
++            os.write(rrtype.toByteArray());
++            os.write(rrclass.toByteArray());
++            os.write(Utils.int32toByteArray(ttl));
++            os.write(Utils.int16toByteArray(rdlength));
++        } catch (IOException ex) {
++            // This Exception should not happen ever
++            Logger.getLogger(ResourceRecord.class.getName()).log(Level.SEVERE, null, ex);
++            System.exit(-1);
++        }
++
++        return os.toByteArray();
++    }
++
++    protected final int commonSize() {
++        return domain.getEncodedLength() + 2 + 2 + 4 + 2; // type + class + ttl + rdlength
++    }
++
++    /**
++     * The DomainName of the ResourceRecord
++     *
++     * @return
++     */
++    public final DomainName getDomain() {
++        return domain;
++    }
++
++    /**
++     * The Type of the ResourceRecourd
++     *
++     * @return
++     */
++    public final RRType getRRType() {
++        return rrtype;
++    }
++
++    /**
++     * The class of the Resource Record
++     *
++     * @return
++     */
++    public final RRClass getRRClass() {
++        return rrclass;
++    }
++
++    /**
++     * The TTL (in seconds) of the ResourceRecord. Note that this field is not
++     * updated by this class. Care must be taken to update it if it is to be
++     * stored in a cache object.
++     *
++     * @return
++     */
++    public final int getTTL() {
++        return ttl;
++    }
++
++    /**
++     * Number of bytes required to hold the RRData
++     *
++     * @return
++     */
++    public final int getRDLength() {
++        return rdlength;
++    }
++
++    /**
++     * Undecoded data in this ResourceRecord. Needed if the type is not
++     * supported by this library.
++     *
++     * @return
++     */
++    public final byte[] getRRData() {
++        return rrdata;
++    }
++}
